@@ -5,8 +5,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.stream.Stream;
 
 public class Main {
@@ -15,6 +15,8 @@ public class Main {
         nonUTF();
         writingFiles();
         CSV();
+        walkfFileTreePattern();
+        walkPattern();
     }
 
     private static void readAndWrite() throws IOException {
@@ -95,5 +97,60 @@ public class Main {
 
         }
         return Stream.empty();
+    }
+
+    public static void walkfFileTreePattern() throws IOException {
+        Path path = Paths.get("files/media");
+
+        var visitor = new FileVisitor<Path>() {
+            private long count = 0L;
+            private long dirs = 0L;
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                dirs++;
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                count++;
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+        };
+
+        Files.walkFileTree(path, visitor);
+
+        System.out.println("FileCount = " + visitor.count + " Directory Count = " + visitor.dirs);
+    }
+
+    private static void walkPattern() throws IOException {
+        Path path = Paths.get("files/media");
+
+        Stream<Path> stream = Files.walk(path);
+
+        long count = stream.count();
+
+        long countDirs =
+                Files.walk(path)
+                        .filter(Files::isDirectory) // method reference
+                        .count();
+
+        long countFiles =
+                Files.walk(path)
+                        .filter(p -> Files.isRegularFile(p))
+                        .count();
+
+        System.out.println("Count = " + count);
+        System.out.println("FileCount = " + countFiles + " Directory Count = " + countDirs);
     }
 }
